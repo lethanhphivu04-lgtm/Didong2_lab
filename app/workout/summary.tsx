@@ -1,13 +1,52 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Share, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Card, Button, StatTile } from '../../components';
+import { workoutService } from '../../services';
 
 export default function WorkoutSummaryScreen() {
   const router = useRouter();
+  const [hasSaved, setHasSaved] = useState(false);
+
+  const workoutData = {
+    workoutId: 'workout_today',
+    workoutTitle: 'Chân và Core',
+    durationMinutes: 26,
+    caloriesBurned: 195,
+    totalReps: 108,
+    postureScore: 86,
+    exerciseScores: [
+      { exerciseId: 'squat', exerciseName: 'Squat', score: 88 },
+      { exerciseId: 'plank', exerciseName: 'Plank', score: 90 },
+      { exerciseId: 'lunge', exerciseName: 'Lunge', score: 80 },
+    ],
+  };
+
+  useEffect(() => {
+    async function saveLog() {
+      if (!hasSaved) {
+        await workoutService.saveWorkoutLog({
+          ...workoutData,
+          completedAt: 'Hôm nay',
+        });
+        setHasSaved(true);
+      }
+    }
+    saveLog();
+  }, [hasSaved]);
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `🔥 Tôi vừa hoàn thành buổi tập "${workoutData.workoutTitle}" cùng Fitness AI!\n⏱️ Thời gian: ${workoutData.durationMinutes} phút\n⚡ Calo đốt: ${workoutData.caloriesBurned} kcal\n🎯 Điểm tư thế: ${workoutData.postureScore}/100`,
+      });
+    } catch (e) {
+      console.warn('Share error:', e);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -22,24 +61,24 @@ export default function WorkoutSummaryScreen() {
           <View style={styles.metricRow}>
             <StatTile
               label={strings.workout.durationLabel}
-              value="26 phút"
+              value={`${workoutData.durationMinutes} phút`}
               style={styles.metricTile}
             />
             <StatTile
               label={strings.workout.caloriesBurnedLabel}
-              value="195 kcal"
+              value={`${workoutData.caloriesBurned} kcal`}
               style={styles.metricTile}
             />
           </View>
           <View style={styles.metricRow}>
             <StatTile
               label={strings.workout.totalRepsLabel}
-              value="108"
+              value={workoutData.totalReps}
               style={styles.metricTile}
             />
             <StatTile
               label={strings.workout.postureScoreLabel}
-              value="86/100"
+              value={`${workoutData.postureScore}/100`}
               style={styles.metricTile}
             />
           </View>
@@ -50,20 +89,12 @@ export default function WorkoutSummaryScreen() {
           {strings.workout.postureScorePerExercise}
         </Text>
 
-        <Card style={styles.scoreRowCard}>
-          <Text style={styles.exerciseName}>Squat</Text>
-          <Text style={styles.scoreValue}>88</Text>
-        </Card>
-
-        <Card style={styles.scoreRowCard}>
-          <Text style={styles.exerciseName}>Plank</Text>
-          <Text style={styles.scoreValue}>90</Text>
-        </Card>
-
-        <Card style={styles.scoreRowCard}>
-          <Text style={styles.exerciseName}>Lunge</Text>
-          <Text style={styles.scoreValue}>80</Text>
-        </Card>
+        {workoutData.exerciseScores.map((item) => (
+          <Card key={item.exerciseId} style={styles.scoreRowCard}>
+            <Text style={styles.exerciseName}>{item.exerciseName}</Text>
+            <Text style={styles.scoreValue}>{item.score}</Text>
+          </Card>
+        ))}
 
         {/* Bottom Action Buttons */}
         <Button
@@ -77,7 +108,7 @@ export default function WorkoutSummaryScreen() {
           title={strings.workout.shareResult}
           variant="secondary"
           accessibilityLabel={strings.workout.shareResult}
-          onPress={() => {}}
+          onPress={handleShare}
           style={styles.shareButton}
         />
       </ScrollView>

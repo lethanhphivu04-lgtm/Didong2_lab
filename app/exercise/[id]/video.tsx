@@ -1,13 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Dimensions,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { useEvent } from 'expo';
 import { theme } from '../../../theme';
 import { strings } from '../../../constants/strings';
 import { Header, Card, Button, Chip } from '../../../components';
 import { workoutService } from '../../../services';
 import { Exercise } from '../../../types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ExerciseVideoScreen() {
   const router = useRouter();
@@ -16,7 +28,10 @@ export default function ExerciseVideoScreen() {
   const [mode3D, setMode3D] = useState(true);
   const [speed, setSpeed] = useState<number>(1);
   const [loop, setLoop] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
+  const [durationSec, setDurationSec] = useState(30);
+
+  const videoViewRef = useRef<VideoView>(null);
 
   useEffect(() => {
     loadExercise();
@@ -27,6 +42,105 @@ export default function ExerciseVideoScreen() {
     setExercise(e);
   };
 
+  const initialVideoUrl = exercise
+    ? mode3D
+      ? exercise.video3DUrl
+      : exercise.video2DUrl
+    : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+
+  const player = useVideoPlayer(initialVideoUrl, (p) => {
+    p.loop = true;
+    p.playbackRate = 1.0;
+    p.play();
+  });
+
+  // Track playing status with useEvent from expo
+  const playingEvent = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const isPlaying = playingEvent?.isPlaying ?? player.playing;
+
+  // Track player status (idle, loading, readyToPlay, error)
+  const statusEvent = useEvent(player, 'statusChange', {
+    status: player.status,
+  });
+  const currentStatus = statusEvent?.status ?? player.status;
+  const isBuffering = currentStatus === 'loading';
+  const hasError = currentStatus === 'error';
+
+  // Track playback time
+  const timeUpdateEvent = useEvent(player, 'timeUpdate', {
+    currentTime: player.currentTime,
+    bufferedPosition: 0,
+    currentLiveTimestamp: null,
+    currentOffsetFromLive: null,
+  });
+
+  useEffect(() => {
+    if (timeUpdateEvent?.currentTime !== undefined) {
+      setCurrentTimeSec(timeUpdateEvent.currentTime);
+    }
+    if (player.duration > 0) {
+      setDurationSec(player.duration);
+    }
+  }, [timeUpdateEvent, player.duration]);
+
+  // Format seconds mm:ss
+  const formatTime = (secs: number) => {
+    const totalSecs = Math.max(0, Math.floor(secs));
+    const mins = Math.floor(totalSecs / 60);
+    const rem = totalSecs % 60;
+    return `${mins}:${rem < 10 ? '0' : ''}${rem}`;
+  };
+
+  // Switch 2D/3D while preserving exact currentTime
+  const handleToggleDimension = (newMode3D: boolean) => {
+    if (mode3D === newMode3D || !exercise) return;
+    const currentPos = player.currentTime;
+    const wasPlaying = isPlaying;
+
+    setMode3D(newMode3D);
+    const newSource = newMode3D ? exercise.video3DUrl : exercise.video2DUrl;
+
+    player.replace(newSource);
+    player.currentTime = currentPos;
+    player.playbackRate = speed;
+    player.loop = loop;
+    if (wasPlaying) {
+      player.play();
+    }
+  };
+
+  // Change playback speed
+  const handleChangeSpeed = (newSpeed: number) => {
+    setSpeed(newSpeed);
+    player.playbackRate = newSpeed;
+  };
+
+  // Toggle loop
+  const handleToggleLoop = () => {
+    const nextLoop = !loop;
+    setLoop(nextLoop);
+    player.loop = nextLoop;
+  };
+
+  // Seek +/- 5s
+  const handleSeek = (deltaSec: number) => {
+    player.seekBy(deltaSec);
+  };
+
+  // Toggle picture in picture
+  const handlePip = async () => {
+    try {
+      if (videoViewRef.current) {
+        await videoViewRef.current.startPictureInPicture();
+      }
+    } catch (e) {
+      console.warn('PiP not available on this device:', e);
+    }
+  };
+
+  const progressPercent =
+    durationSec > 0 ? Math.min((currentTimeSec / durationSec) * 100, 100) : 0;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -35,46 +149,111 @@ export default function ExerciseVideoScreen() {
       >
         <Header />
 
-        {/* Video Player Box Mockup Container */}
+        {/* Video Player Box with Custom Overlay Controls */}
         <View style={styles.videoPlayerContainer}>
-          {/* Top badges over video */}
+          <VideoView
+            ref={videoViewRef}
+            player={player}
+            nativeControls={false}
+            allowsPictureInPicture
+            fullscreenOptions={{ enable: true }}
+            contentFit="cover"
+            style={styles.videoSurface}
+          />
+
+          {/* Top badges bar over video */}
           <View style={styles.videoTopBar}>
             <View style={styles.videoBadge}>
               <Text style={styles.videoBadgeText}>
                 {exercise?.name || 'Squat'} · {mode3D ? '3D' : '2D'}
               </Text>
             </View>
+
             <TouchableOpacity
               style={styles.pipBadge}
+              onPress={handlePip}
               accessibilityRole="button"
-              accessibilityLabel="Picture in Picture"
+              accessibilityLabel={strings.videoPlayer.pip}
             >
               <Text style={styles.pipText}>PiP</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Center Play Button */}
-          <TouchableOpacity
-            style={styles.centerPlayButton}
-            onPress={() => setIsPlaying(!isPlaying)}
-            accessibilityRole="button"
-            accessibilityLabel={isPlaying ? 'Tạm dừng video' : 'Phát video'}
-          >
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={28}
-              color={theme.colors.textOnPrimary}
-            />
-          </TouchableOpacity>
-
-          {/* Timeline Bar */}
-          <View style={styles.timelineContainer}>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: '40%' }]} />
+          {/* Buffering Indicator */}
+          {isBuffering && (
+            <View style={styles.bufferingOverlay}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
+          )}
+
+          {/* Error Overlay */}
+          {hasError && (
+            <View style={styles.errorOverlay}>
+              <Text style={styles.errorText}>Không thể phát video</Text>
+              <Button
+                title={strings.common.retry}
+                size="small"
+                variant="outline"
+                accessibilityLabel={strings.common.retry}
+                onPress={() => player.replay()}
+              />
+            </View>
+          )}
+
+          {/* Center Play/Pause button */}
+          {!hasError && (
+            <TouchableOpacity
+              style={styles.centerPlayButton}
+              onPress={() => (isPlaying ? player.pause() : player.play())}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? 'Tạm dừng video' : 'Phát video'}
+            >
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={28}
+                color={theme.colors.textOnPrimary}
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Timeline and seek controls */}
+          <View style={styles.timelineContainer}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={(e) => {
+                const clickX = e.nativeEvent.locationX;
+                const containerWidth = SCREEN_WIDTH - 32 - 24; // padding offset
+                const targetPercent = Math.max(0, Math.min(clickX / containerWidth, 1));
+                player.currentTime = targetPercent * durationSec;
+              }}
+              style={styles.progressTouchArea}
+            >
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+              </View>
+            </TouchableOpacity>
+
             <View style={styles.timeLabelsRow}>
-              <Text style={styles.timeText}>0:12</Text>
-              <Text style={styles.timeText}>0:30</Text>
+              <Text style={styles.timeText}>{formatTime(currentTimeSec)}</Text>
+              <View style={styles.seekRow}>
+                <TouchableOpacity
+                  onPress={() => handleSeek(-5)}
+                  style={styles.seekButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Lùi 5 giây"
+                >
+                  <Ionicons name="play-back" size={14} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleSeek(5)}
+                  style={styles.seekButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Tua nhanh 5 giây"
+                >
+                  <Ionicons name="play-forward" size={14} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.timeText}>{formatTime(durationSec)}</Text>
             </View>
           </View>
         </View>
@@ -86,9 +265,9 @@ export default function ExerciseVideoScreen() {
         <View style={styles.segmentContainer}>
           <TouchableOpacity
             style={[styles.segmentButton, !mode3D && styles.segmentButtonActive]}
-            onPress={() => setMode3D(false)}
+            onPress={() => handleToggleDimension(false)}
             accessibilityRole="button"
-            accessibilityLabel="Chế độ xem video 2D"
+            accessibilityLabel="Chuyển sang video 2D"
           >
             <Text style={[styles.segmentText, !mode3D && styles.segmentTextActive]}>
               2D
@@ -97,9 +276,9 @@ export default function ExerciseVideoScreen() {
 
           <TouchableOpacity
             style={[styles.segmentButton, mode3D && styles.segmentButtonActive]}
-            onPress={() => setMode3D(true)}
+            onPress={() => handleToggleDimension(true)}
             accessibilityRole="button"
-            accessibilityLabel="Chế độ xem mô hình 3D"
+            accessibilityLabel="Chuyển sang mô hình 3D"
           >
             <Text style={[styles.segmentText, mode3D && styles.segmentTextActive]}>
               3D
@@ -116,19 +295,19 @@ export default function ExerciseVideoScreen() {
                 key={s}
                 label={`${s}x`}
                 selected={speed === s}
-                onPress={() => setSpeed(s)}
+                onPress={() => handleChangeSpeed(s)}
                 style={styles.speedChip}
               />
             ))}
           </View>
 
           <TouchableOpacity
-            onPress={() => setLoop(!loop)}
+            onPress={handleToggleLoop}
             style={styles.loopToggle}
             accessibilityRole="button"
-            accessibilityLabel="Bật tắt lặp video"
+            accessibilityLabel="Bật hoặc tắt lặp lại video"
           >
-            <Text style={styles.loopText}>
+            <Text style={[styles.loopText, loop && styles.loopTextActive]}>
               {loop ? strings.videoPlayer.loopOn : strings.videoPlayer.loopOff}
             </Text>
           </TouchableOpacity>
@@ -149,7 +328,10 @@ export default function ExerciseVideoScreen() {
         <Button
           title={strings.videoPlayer.trainWithCamera}
           accessibilityLabel={strings.videoPlayer.trainWithCamera}
-          onPress={() => router.push(`/exercise/${exercise?.id || 'squat'}/camera-workout`)}
+          onPress={() => {
+            player.pause();
+            router.push(`/exercise/${exercise?.id || 'squat'}/camera-workout`);
+          }}
           style={styles.cameraButton}
         />
       </ScrollView>
@@ -173,17 +355,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#16221D',
     overflow: 'hidden',
+    position: 'relative',
     justifyContent: 'space-between',
     padding: theme.spacing.md,
     marginBottom: theme.spacing.lg,
+  },
+  videoSurface: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: '#0A0F0D',
   },
   videoTopBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    zIndex: 10,
   },
   videoBadge: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
@@ -194,7 +382,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamilies.bold,
   },
   pipBadge: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
@@ -204,6 +392,27 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.xs,
     fontFamily: theme.fontFamilies.bold,
   },
+  bufferingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
+  errorOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(15,20,18,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 15,
+    padding: 16,
+    gap: 12,
+  },
+  errorText: {
+    color: theme.colors.danger,
+    fontSize: theme.typography.sizes.sm,
+    fontFamily: theme.fontFamilies.semiBold,
+  },
   centerPlayButton: {
     alignSelf: 'center',
     width: 58,
@@ -212,16 +421,20 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   timelineContainer: {
     width: '100%',
+    zIndex: 10,
+  },
+  progressTouchArea: {
+    paddingVertical: 6,
   },
   progressTrack: {
     height: 4,
     backgroundColor: '#3A4640',
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: 4,
   },
   progressFill: {
     height: '100%',
@@ -230,11 +443,20 @@ const styles = StyleSheet.create({
   timeLabelsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
   },
   timeText: {
     fontSize: theme.typography.sizes.xs,
     fontFamily: theme.fontFamilies.regular,
     color: theme.colors.textSecondary,
+  },
+  seekRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  seekButton: {
+    padding: 2,
   },
   exerciseTitle: {
     fontSize: 28,
@@ -298,6 +520,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.sm,
     fontFamily: theme.fontFamilies.semiBold,
     color: theme.colors.textSecondary,
+  },
+  loopTextActive: {
+    color: theme.colors.primary,
   },
   instructionsTitle: {
     fontSize: theme.typography.sizes.lg,

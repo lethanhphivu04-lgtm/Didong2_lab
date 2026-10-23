@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
@@ -13,14 +13,17 @@ export default function ExerciseLibraryScreen() {
   const [search, setSearch] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<MuscleGroup>('all');
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadExercises();
   }, [search, selectedGroup]);
 
   const loadExercises = async () => {
+    setLoading(true);
     const list = await workoutService.searchExercises(search, selectedGroup);
     setExercises(list);
+    setLoading(false);
   };
 
   return (
@@ -68,16 +71,34 @@ export default function ExerciseLibraryScreen() {
           />
         </View>
 
+        {/* Loading State */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          </View>
+        )}
+
+        {/* Empty State */}
+        {!loading && exercises.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>Không tìm thấy bài tập nào</Text>
+            <Text style={styles.emptySubtitle}>
+              Thử tìm kiếm với từ khóa khác hoặc chọn nhóm cơ khác
+            </Text>
+          </View>
+        )}
+
         {/* Exercises */}
-        {exercises.map((item) => (
-          <ExerciseRow
-            key={item.id}
-            title={item.name}
-            subtitle={`${item.muscleGroupDisplay} · ${item.difficultyDisplay}`}
-            badgeText={strings.workout.videoBadge}
-            onPress={() => router.push(`/exercise/${item.id}/video`)}
-          />
-        ))}
+        {!loading &&
+          exercises.map((item) => (
+            <ExerciseRow
+              key={item.id}
+              title={item.name}
+              subtitle={`${item.muscleGroupDisplay} · ${item.difficultyDisplay}`}
+              badgeText={strings.workout.videoBadge}
+              onPress={() => router.push(`/exercise/${item.id}/video`)}
+            />
+          ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -98,5 +119,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: theme.spacing.xl,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    paddingVertical: 50,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: theme.typography.sizes.base,
+    fontFamily: theme.fontFamilies.bold,
+    fontWeight: '700',
+    color: theme.colors.textPrimary,
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: theme.typography.sizes.sm,
+    fontFamily: theme.fontFamilies.regular,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Button, TextField } from '../../components';
+import { authService, profileService } from '../../services';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -14,12 +15,75 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    terms?: string;
+  }>({});
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!fullName.trim()) {
+      newErrors.fullName = strings.auth.errors.emptyName;
+    }
+
+    if (!email.trim()) {
+      newErrors.email = strings.common.requiredField;
+    } else if (!emailRegex.test(email.trim())) {
+      newErrors.email = strings.auth.errors.invalidEmail;
+    }
+
+    if (!password) {
+      newErrors.password = strings.common.requiredField;
+    } else if (password.length < 8) {
+      newErrors.password = strings.auth.errors.passwordTooShort;
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = strings.common.requiredField;
+    } else if (confirmPassword !== password) {
+      newErrors.confirmPassword = strings.auth.errors.passwordMismatch;
+    }
+
+    if (!agreeTerms) {
+      newErrors.terms = strings.auth.errors.termsRequired;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+      const user = await authService.register(fullName.trim(), email.trim(), password);
+      // Initialize profile with step 1
+      await profileService.updateProfile({
+        user,
+        onboardingCompleted: false,
+        onboardingStep: 1,
+      });
+      setLoading(false);
+      router.replace('/(onboarding)/step1-profile');
+    } catch (e) {
+      setLoading(false);
+      Alert.alert(strings.common.error, 'Không thể tạo tài khoản. Vui lòng thử lại.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>{strings.auth.createAccount}</Text>
         <Text style={styles.subtitle}>{strings.auth.registerSubtitle}</Text>
@@ -28,7 +92,11 @@ export default function RegisterScreen() {
           label={strings.auth.fullName}
           placeholder="Nguyễn Văn A"
           value={fullName}
-          onChangeText={setFullName}
+          onChangeText={(text) => {
+            setFullName(text);
+            if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: undefined }));
+          }}
+          error={errors.fullName}
         />
 
         <TextField
@@ -37,7 +105,11 @@ export default function RegisterScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
+          error={errors.email}
         />
 
         <TextField
@@ -45,7 +117,11 @@ export default function RegisterScreen() {
           placeholder="Tối thiểu 8 ký tự"
           isPassword
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          error={errors.password}
         />
 
         <TextField
@@ -53,13 +129,21 @@ export default function RegisterScreen() {
           placeholder="Nhập lại mật khẩu"
           isPassword
           value={confirmPassword}
-          onChangeText={setConfirmPassword}
+          onChangeText={(text) => {
+            setConfirmPassword(text);
+            if (errors.confirmPassword)
+              setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+          }}
+          error={errors.confirmPassword}
         />
 
         {/* Agree terms checkbox */}
         <TouchableOpacity
           style={styles.termsRow}
-          onPress={() => setAgreeTerms(!agreeTerms)}
+          onPress={() => {
+            setAgreeTerms(!agreeTerms);
+            if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
+          }}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: agreeTerms }}
           accessibilityLabel={strings.auth.agreeTerms}
@@ -71,11 +155,13 @@ export default function RegisterScreen() {
           </View>
           <Text style={styles.termsText}>{strings.auth.agreeTerms}</Text>
         </TouchableOpacity>
+        {!!errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
 
         <Button
           title={strings.auth.createAccount}
           accessibilityLabel={strings.auth.createAccount}
-          onPress={() => router.push('/(onboarding)/step1-profile')}
+          loading={loading}
+          onPress={handleRegister}
           style={styles.registerButton}
         />
 
@@ -122,7 +208,7 @@ const styles = StyleSheet.create({
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: theme.spacing.lg,
+    marginTop: theme.spacing.md,
     minHeight: 44,
   },
   checkbox: {
@@ -144,8 +230,15 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontFamily: theme.fontFamilies.regular,
   },
+  errorText: {
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.danger,
+    marginTop: 4,
+    marginBottom: 8,
+    fontFamily: theme.fontFamilies.regular,
+  },
   registerButton: {
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
   },
   switchAuthButton: {

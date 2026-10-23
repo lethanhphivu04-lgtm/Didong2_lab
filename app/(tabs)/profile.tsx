@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -13,21 +13,40 @@ export default function ProfileTabScreen() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
   const loadProfile = async () => {
     const p = await profileService.getProfile();
     setProfile(p);
   };
 
-  const handleLogout = async () => {
-    await authService.logout();
-    router.replace('/(auth)/login');
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [])
+  );
+
+  const handleLogout = () => {
+    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Đăng xuất',
+        style: 'destructive',
+        onPress: async () => {
+          await authService.logout();
+          router.replace('/(auth)/login');
+        },
+      },
+    ]);
   };
 
   const initial = profile?.user.fullName ? profile.user.fullName[0].toUpperCase() : 'A';
+  const goalTitle =
+    profile?.goal?.type === 'fatLoss'
+      ? 'Giảm mỡ'
+      : profile?.goal?.type === 'muscleGain'
+      ? 'Tăng cơ'
+      : profile?.goal?.type === 'stayFit'
+      ? 'Giữ dáng'
+      : 'Tăng sức bền';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -42,7 +61,7 @@ export default function ProfileTabScreen() {
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{profile?.user.fullName || 'Nguyễn Văn A'}</Text>
-            <Text style={styles.userGoal}>Mục tiêu: Giảm mỡ · Tuần 3/8</Text>
+            <Text style={styles.userGoal}>Mục tiêu: {goalTitle} · Tuần 3/8</Text>
           </View>
         </View>
 

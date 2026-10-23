@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Button, Chip, StepProgress } from '../../components';
+import { profileService, planService } from '../../services';
 import { FitnessLevel, EquipmentType } from '../../types';
 
 export default function Step3ScheduleScreen() {
@@ -13,12 +14,46 @@ export default function Step3ScheduleScreen() {
   const [sessions, setSessions] = useState<number>(4);
   const [duration, setDuration] = useState<number>(45);
   const [equipment, setEquipment] = useState<EquipmentType>('none');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadSaved() {
+      const p = await profileService.getProfile();
+      if (p?.schedule) {
+        setLevel(p.schedule.level);
+        setSessions(p.schedule.sessionsPerWeek);
+        setDuration(p.schedule.durationMinutes);
+        setEquipment(p.schedule.equipment);
+      }
+    }
+    loadSaved();
+  }, []);
+
+  const handleGenerate = async () => {
+    try {
+      setLoading(true);
+      const updatedProfile = await profileService.saveSchedule({
+        level,
+        sessionsPerWeek: sessions,
+        durationMinutes: duration,
+        equipment,
+      });
+
+      // Generate AI plan using the profile configuration
+      await planService.generateAIPlan(updatedProfile);
+      setLoading(false);
+      router.push('/(onboarding)/step4-ai-plan');
+    } catch (e) {
+      setLoading(false);
+      Alert.alert(strings.common.error, 'Không thể tạo lộ trình. Vui lòng thử lại.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <StepProgress currentStep={3} totalSteps={4} />
 
@@ -99,7 +134,8 @@ export default function Step3ScheduleScreen() {
         <Button
           title={strings.onboarding.step3.generateButton}
           accessibilityLabel={strings.onboarding.step3.generateButton}
-          onPress={() => router.push('/(onboarding)/step4-ai-plan')}
+          loading={loading}
+          onPress={handleGenerate}
           style={styles.generateButton}
         />
       </ScrollView>

@@ -1,21 +1,92 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Button, TextField } from '../../components';
+import { authService, profileService } from '../../services';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('ban@email.com');
   const [password, setPassword] = useState('12345678');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  const validate = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email.trim()) {
+      newErrors.email = strings.common.requiredField;
+    } else if (!emailRegex.test(email.trim())) {
+      newErrors.email = strings.auth.errors.invalidEmail;
+    }
+
+    if (!password) {
+      newErrors.password = strings.common.requiredField;
+    } else if (password.length < 8) {
+      newErrors.password = strings.auth.errors.passwordTooShort;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogin = async () => {
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+      await authService.login(email.trim(), password);
+
+      const profile = await profileService.getProfile();
+      setLoading(false);
+
+      if (!profile || !profile.onboardingCompleted) {
+        const step = profile ? profile.onboardingStep : 1;
+        switch (step) {
+          case 2:
+            router.replace('/(onboarding)/step2-goal');
+            break;
+          case 3:
+            router.replace('/(onboarding)/step3-schedule');
+            break;
+          case 4:
+            router.replace('/(onboarding)/step4-ai-plan');
+            break;
+          case 1:
+          default:
+            router.replace('/(onboarding)/step1-profile');
+            break;
+        }
+      } else {
+        router.replace('/(tabs)/workout');
+      }
+    } catch (e) {
+      setLoading(false);
+      Alert.alert(strings.common.error, 'Không thể đăng nhập. Vui lòng kiểm tra lại thông tin.');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      await authService.login('google.user@gmail.com', 'google12345');
+      setLoading(false);
+      router.replace('/(onboarding)/step1-profile');
+    } catch (e) {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         {/* Brand squircle logo */}
         <View style={styles.logoSquircle} />
@@ -31,7 +102,11 @@ export default function LoginScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
+          error={errors.email}
         />
 
         <TextField
@@ -39,12 +114,16 @@ export default function LoginScreen() {
           placeholder="••••••••"
           isPassword
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          error={errors.password}
         />
 
         <TouchableOpacity
           style={styles.forgotPasswordButton}
-          onPress={() => {}}
+          onPress={() => Alert.alert('Quên mật khẩu', 'Vui lòng kiểm tra email để đặt lại mật khẩu.')}
           accessibilityRole="button"
           accessibilityLabel={strings.auth.forgotPassword}
         >
@@ -57,7 +136,8 @@ export default function LoginScreen() {
           <Button
             title={strings.auth.login}
             accessibilityLabel={strings.auth.login}
-            onPress={() => router.push('/(onboarding)/step1-profile')}
+            loading={loading}
+            onPress={handleLogin}
             style={styles.primaryButton}
           />
 
@@ -65,7 +145,7 @@ export default function LoginScreen() {
             title={strings.auth.continueWithGoogle}
             variant="secondary"
             accessibilityLabel={strings.auth.continueWithGoogle}
-            onPress={() => router.push('/(onboarding)/step1-profile')}
+            onPress={handleGoogleLogin}
             style={styles.googleButton}
           />
 
@@ -126,7 +206,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontSize: theme.typography.sizes.sm,
     fontFamily: theme.fontFamilies.semiBold,
-    color: theme.colors.primary, // #C6F432
+    color: theme.colors.primary,
   },
   actionSection: {
     marginTop: theme.spacing.lg,

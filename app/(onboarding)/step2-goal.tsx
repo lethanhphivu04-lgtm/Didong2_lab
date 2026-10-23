@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Button, Card, TextField, StepProgress } from '../../components';
+import { profileService } from '../../services';
 import { GoalType } from '../../types';
 
 interface GoalOption {
@@ -40,12 +41,47 @@ export default function Step2GoalScreen() {
   const router = useRouter();
   const [selectedGoal, setSelectedGoal] = useState<GoalType>('fatLoss');
   const [targetWeight, setTargetWeight] = useState('60');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  useEffect(() => {
+    async function loadSaved() {
+      const p = await profileService.getProfile();
+      if (p?.goal) {
+        setSelectedGoal(p.goal.type);
+        setTargetWeight(p.goal.targetWeightKg.toString());
+      }
+    }
+    loadSaved();
+  }, []);
+
+  const handleContinue = async () => {
+    const parsedTarget = parseFloat(targetWeight);
+    if (!targetWeight || isNaN(parsedTarget) || parsedTarget < 30 || parsedTarget > 250) {
+      setError('Vui lòng nhập cân nặng mong muốn hợp lệ (30 - 250 kg)');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await profileService.saveGoal({
+        type: selectedGoal,
+        targetWeightKg: parsedTarget,
+      });
+      setLoading(false);
+      router.push('/(onboarding)/step3-schedule');
+    } catch (e) {
+      setLoading(false);
+      Alert.alert(strings.common.error, 'Không thể lưu mục tiêu.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <StepProgress currentStep={2} totalSteps={4} />
 
@@ -72,15 +108,20 @@ export default function Step2GoalScreen() {
         <TextField
           label={strings.onboarding.step2.targetWeight}
           value={targetWeight}
-          onChangeText={setTargetWeight}
+          onChangeText={(t) => {
+            setTargetWeight(t);
+            if (error) setError(undefined);
+          }}
           keyboardType="numeric"
           containerStyle={styles.targetWeightInput}
+          error={error}
         />
 
         <Button
           title={strings.common.continue}
           accessibilityLabel={strings.common.continue}
-          onPress={() => router.push('/(onboarding)/step3-schedule')}
+          loading={loading}
+          onPress={handleContinue}
           style={styles.continueButton}
         />
       </ScrollView>

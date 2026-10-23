@@ -1,14 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Header, Card } from '../../components';
+import { storage } from '../../services';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [workoutReminder, setWorkoutReminder] = useState(true);
   const [mealReminder, setMealReminder] = useState(false);
+  const [reminderTime, setReminderTime] = useState('18:00');
+
+  const handleChangePassword = () => {
+    Alert.alert('Đổi mật khẩu', 'Đã gửi liên kết đặt lại mật khẩu về email của bạn.');
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Cảnh báo xóa tài khoản',
+      'Hành động này sẽ xóa vĩnh viễn toàn bộ dữ liệu buổi tập, dinh dưỡng và tiến độ của bạn. Bạn có chắc chắn không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa vĩnh viễn',
+          style: 'destructive',
+          onPress: async () => {
+            await storage.clear();
+            router.replace('/(auth)/login');
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,9 +65,18 @@ export default function SettingsScreen() {
           </View>
         </Card>
 
-        <Card style={styles.settingRowCard}>
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => {
+            Alert.alert(
+              'Giờ nhắc tập',
+              `Hiện tại: ${reminderTime}. Bạn có thể thay đổi giờ nhắc trong hệ thống thông báo.`
+            );
+          }}
+          accessibilityLabel={strings.settings.reminderTime}
+        >
           <Text style={styles.settingLabel}>{strings.settings.reminderTime}</Text>
-          <Text style={styles.settingValue}>18:00</Text>
+          <Text style={styles.settingValue}>{reminderTime}</Text>
         </Card>
 
         <Card
@@ -65,17 +100,29 @@ export default function SettingsScreen() {
         {/* ỨNG DỤNG */}
         <Text style={styles.sectionHeader}>{strings.settings.appSection}</Text>
 
-        <Card style={styles.settingRowCard}>
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => Alert.alert('Đơn vị', 'Ứng dụng hiện hỗ trợ hệ đo lường chuẩn: kg · cm')}
+          accessibilityLabel={strings.settings.units}
+        >
           <Text style={styles.settingLabel}>{strings.settings.units}</Text>
           <Text style={styles.settingValue}>{strings.settings.unitValue}</Text>
         </Card>
 
-        <Card style={styles.settingRowCard}>
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => Alert.alert('Ngôn ngữ', 'Ứng dụng đang hiển thị Tiếng Việt mặc định')}
+          accessibilityLabel={strings.settings.language}
+        >
           <Text style={styles.settingLabel}>{strings.settings.language}</Text>
           <Text style={styles.settingValue}>{strings.settings.languageValue}</Text>
         </Card>
 
-        <Card style={styles.settingRowCard}>
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => Alert.alert('Giao diện', 'Giao diện tối chuyên nghiệp (Dark theme)')}
+          accessibilityLabel={strings.settings.theme}
+        >
           <Text style={styles.settingLabel}>{strings.settings.theme}</Text>
           <Text style={styles.settingValue}>{strings.settings.themeDark}</Text>
         </Card>
@@ -83,12 +130,20 @@ export default function SettingsScreen() {
         {/* TÀI KHOẢN */}
         <Text style={styles.sectionHeader}>{strings.settings.accountSection}</Text>
 
-        <Card style={styles.settingRowCard} onPress={() => {}}>
+        <Card
+          style={styles.settingRowCard}
+          onPress={handleChangePassword}
+          accessibilityLabel={strings.settings.changePassword}
+        >
           <Text style={styles.settingLabel}>{strings.settings.changePassword}</Text>
           <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
         </Card>
 
-        <Card style={styles.settingRowCard} onPress={() => {}}>
+        <Card
+          style={styles.settingRowCard}
+          onPress={handleDeleteAccount}
+          accessibilityLabel={strings.settings.deleteAccount}
+        >
           <Text style={[styles.settingLabel, styles.dangerLabel]}>
             {strings.settings.deleteAccount}
           </Text>

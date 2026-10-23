@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Button, TextField, Chip, StepProgress, StatTile } from '../../components';
+import { profileService } from '../../services';
 import { Gender } from '../../types';
 
 export default function Step1ProfileScreen() {
@@ -13,27 +14,87 @@ export default function Step1ProfileScreen() {
   const [age, setAge] = useState('21');
   const [height, setHeight] = useState('170');
   const [weight, setWeight] = useState('65');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ age?: string; height?: string; weight?: string }>({});
+
+  useEffect(() => {
+    async function loadSaved() {
+      const p = await profileService.getProfile();
+      if (p?.physical) {
+        setGender(p.physical.gender);
+        setAge(p.physical.age.toString());
+        setHeight(p.physical.heightCm.toString());
+        setWeight(p.physical.weightKg.toString());
+      }
+    }
+    loadSaved();
+  }, []);
 
   // Realtime BMI calculation
   const heightM = parseFloat(height) / 100;
   const weightKg = parseFloat(weight);
-  const bmiValue =
-    heightM > 0 && weightKg > 0 ? (weightKg / (heightM * heightM)).toFixed(1) : '22.5';
+  const bmiNumber =
+    heightM > 0 && weightKg > 0 ? parseFloat((weightKg / (heightM * heightM)).toFixed(1)) : 22.5;
+  const bmiFormatted = bmiNumber.toFixed(1).replace('.', ',');
 
   const getBmiCategory = (bmi: number) => {
-    if (bmi < 18.5) return 'Gầy';
-    if (bmi < 24.9) return 'Bình thường';
-    if (bmi < 29.9) return 'Thừa cân';
-    return 'Béo phì';
+    if (bmi < 18.5) return { label: 'Gầy', color: theme.colors.warning };
+    if (bmi < 25) return { label: 'Bình thường', color: theme.colors.success };
+    if (bmi < 30) return { label: 'Thừa cân', color: theme.colors.warning };
+    return { label: 'Béo phì', color: theme.colors.danger };
   };
 
-  const bmiCategory = getBmiCategory(parseFloat(bmiValue));
+  const bmiStatus = getBmiCategory(bmiNumber);
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    const parsedAge = parseInt(age);
+    const parsedHeight = parseFloat(height);
+    const parsedWeight = parseFloat(weight);
+
+    if (!age || isNaN(parsedAge) || parsedAge < 10 || parsedAge > 100) {
+      newErrors.age = 'Vui lòng nhập tuổi hợp lệ (10 - 100)';
+    }
+
+    if (!height || isNaN(parsedHeight) || parsedHeight < 100 || parsedHeight > 250) {
+      newErrors.height = 'Vui lòng nhập chiều cao hợp lệ (100 - 250 cm)';
+    }
+
+    if (!weight || isNaN(parsedWeight) || parsedWeight < 30 || parsedWeight > 250) {
+      newErrors.weight = 'Vui lòng nhập cân nặng hợp lệ (30 - 250 kg)';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleContinue = async () => {
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+      await profileService.savePhysicalProfile({
+        gender,
+        age: parseInt(age),
+        heightCm: parseFloat(height),
+        weightKg: parseFloat(weight),
+        bmi: bmiNumber,
+        bmiCategory: bmiStatus.label,
+      });
+      setLoading(false);
+      router.push('/(onboarding)/step2-goal');
+    } catch (e) {
+      setLoading(false);
+      Alert.alert(strings.common.error, 'Không thể lưu hồ sơ thể chất.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <StepProgress currentStep={1} totalSteps={4} />
 
@@ -63,37 +124,50 @@ export default function Step1ProfileScreen() {
         <TextField
           label={strings.onboarding.step1.age}
           value={age}
-          onChangeText={setAge}
+          onChangeText={(t) => {
+            setAge(t);
+            if (errors.age) setErrors((prev) => ({ ...prev, age: undefined }));
+          }}
           keyboardType="numeric"
+          error={errors.age}
         />
 
         <TextField
           label={strings.onboarding.step1.height}
           value={height}
-          onChangeText={setHeight}
+          onChangeText={(t) => {
+            setHeight(t);
+            if (errors.height) setErrors((prev) => ({ ...prev, height: undefined }));
+          }}
           keyboardType="numeric"
+          error={errors.height}
         />
 
         <TextField
           label={strings.onboarding.step1.weight}
           value={weight}
-          onChangeText={setWeight}
+          onChangeText={(t) => {
+            setWeight(t);
+            if (errors.weight) setErrors((prev) => ({ ...prev, weight: undefined }));
+          }}
           keyboardType="numeric"
+          error={errors.weight}
         />
 
         {/* BMI Card */}
         <StatTile
           label={strings.onboarding.step1.bmi}
-          value={bmiValue.replace('.', ',')}
-          statusBadge={bmiCategory}
-          statusColor={theme.colors.success}
+          value={bmiFormatted}
+          statusBadge={bmiStatus.label}
+          statusColor={bmiStatus.color}
           style={styles.bmiCard}
         />
 
         <Button
           title={strings.common.continue}
           accessibilityLabel={strings.common.continue}
-          onPress={() => router.push('/(onboarding)/step2-goal')}
+          loading={loading}
+          onPress={handleContinue}
           style={styles.continueButton}
         />
       </ScrollView>

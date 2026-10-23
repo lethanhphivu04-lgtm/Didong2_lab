@@ -45,22 +45,37 @@ export default function EditProfileScreen() {
   };
 
   const handleSave = async () => {
+    if (!fullName.trim()) return;
     setLoading(true);
+    const parsedAge = parseInt(age, 10) || 21;
+    const parsedHeight = parseFloat(height) || 170;
+    const parsedWeight = parseFloat(weight) || 65;
+    const hMeter = parsedHeight / 100;
+    const bmiVal = parseFloat((parsedWeight / (hMeter * hMeter)).toFixed(1));
+    const bmiCategoryVal =
+      bmiVal < 18.5
+        ? 'Gầy'
+        : bmiVal < 23
+        ? 'Bình thường'
+        : bmiVal < 25
+        ? 'Thừa cân'
+        : 'Béo phì';
+
     await profileService.updateProfile({
       user: {
-        ...(profile?.user || { id: 'user_1', createdAt: '' }),
-        fullName,
-        email,
+        ...(profile?.user || { id: 'user_1', createdAt: new Date().toISOString() }),
+        fullName: fullName.trim(),
+        email: email.trim(),
       },
       physical: {
         ...(profile?.physical || {
           gender: 'male',
-          bmi: 22.5,
-          bmiCategory: 'Bình thường',
         }),
-        age: parseInt(age) || 21,
-        heightCm: parseFloat(height) || 170,
-        weightKg: parseFloat(weight) || 65,
+        age: parsedAge,
+        heightCm: parsedHeight,
+        weightKg: parsedWeight,
+        bmi: bmiVal,
+        bmiCategory: bmiCategoryVal,
       },
     });
     setLoading(false);
