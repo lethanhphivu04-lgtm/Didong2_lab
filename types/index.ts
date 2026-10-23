@@ -73,6 +73,7 @@ export interface Exercise {
   hasVideo3D: boolean;
   video2DUrl: string;
   video3DUrl: string;
+  animation3DUrl?: string;
   defaultSets: number;
   defaultRepsOrSeconds: string; // e.g., "12 lần" or "40 giây"
   steps: string[];

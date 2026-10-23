@@ -1,8 +1,8 @@
 import { Exercise, Plan, Workout } from '../types';
 
-// Sample video URLs for 2D and 3D demonstration
-const SAMPLE_VIDEO_2D = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
-const SAMPLE_VIDEO_3D = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4';
+// Real exercise video URLs (2D real trainer & 3D demonstration)
+const SAMPLE_VIDEO_2D = 'https://raw.githubusercontent.com/rohanx01/Squat-Analysis-Model/master/squat.mp4';
+const SAMPLE_VIDEO_3D = 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/squats.mp4';
 
 export const MOCK_EXERCISES: Exercise[] = [
   {
@@ -14,8 +14,9 @@ export const MOCK_EXERCISES: Exercise[] = [
     difficultyDisplay: 'Dễ',
     hasVideo2D: true,
     hasVideo3D: true,
-    video2DUrl: SAMPLE_VIDEO_2D,
-    video3DUrl: SAMPLE_VIDEO_3D,
+    video2DUrl: 'https://raw.githubusercontent.com/rohanx01/Squat-Analysis-Model/master/squat.mp4',
+    video3DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/squats.mp4',
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/0514.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '12 lần',
     steps: [
@@ -33,8 +34,9 @@ export const MOCK_EXERCISES: Exercise[] = [
     difficultyDisplay: 'Dễ',
     hasVideo2D: true,
     hasVideo3D: true,
-    video2DUrl: SAMPLE_VIDEO_2D,
-    video3DUrl: SAMPLE_VIDEO_3D,
+    video2DUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    video3DUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/0464.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '40 giây',
     steps: [
@@ -52,8 +54,9 @@ export const MOCK_EXERCISES: Exercise[] = [
     difficultyDisplay: 'Trung bình',
     hasVideo2D: true,
     hasVideo3D: true,
-    video2DUrl: SAMPLE_VIDEO_2D,
-    video3DUrl: SAMPLE_VIDEO_3D,
+    video2DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/squats.mp4',
+    video3DUrl: 'https://raw.githubusercontent.com/rohanx01/Squat-Analysis-Model/master/squat.mp4',
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/2368.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '10 lần mỗi chân',
     steps: [
@@ -71,8 +74,9 @@ export const MOCK_EXERCISES: Exercise[] = [
     difficultyDisplay: 'Trung bình',
     hasVideo2D: true,
     hasVideo3D: true,
-    video2DUrl: SAMPLE_VIDEO_2D,
-    video3DUrl: SAMPLE_VIDEO_3D,
+    video2DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/pushup.mp4',
+    video3DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/pushup.mp4',
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/0662.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '15 lần',
     steps: [
@@ -90,8 +94,9 @@ export const MOCK_EXERCISES: Exercise[] = [
     difficultyDisplay: 'Khó',
     hasVideo2D: true,
     hasVideo3D: true,
-    video2DUrl: SAMPLE_VIDEO_2D,
-    video3DUrl: SAMPLE_VIDEO_3D,
+    video2DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/curls.mp4',
+    video3DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/curls.mp4',
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/0025.gif',
     defaultSets: 4,
     defaultRepsOrSeconds: '8 lần',
     steps: [
@@ -111,6 +116,7 @@ export const MOCK_EXERCISES: Exercise[] = [
     hasVideo3D: true,
     video2DUrl: SAMPLE_VIDEO_2D,
     video3DUrl: SAMPLE_VIDEO_3D,
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/2355.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '8 lần',
     steps: [
@@ -128,8 +134,9 @@ export const MOCK_EXERCISES: Exercise[] = [
     difficultyDisplay: 'Trung bình',
     hasVideo2D: true,
     hasVideo3D: true,
-    video2DUrl: SAMPLE_VIDEO_2D,
-    video3DUrl: SAMPLE_VIDEO_3D,
+    video2DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/curls.mp4',
+    video3DUrl: 'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/curls.mp4',
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/1665.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '12 lần',
     steps: [
@@ -149,6 +156,7 @@ export const MOCK_EXERCISES: Exercise[] = [
     hasVideo3D: true,
     video2DUrl: SAMPLE_VIDEO_2D,
     video3DUrl: SAMPLE_VIDEO_3D,
+    animation3DUrl: 'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/3663.gif',
     defaultSets: 3,
     defaultRepsOrSeconds: '15 lần',
     steps: [
