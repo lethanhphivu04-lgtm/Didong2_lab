@@ -144,9 +144,9 @@ export const TabBar: React.FC<TabBarProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.background, // #0F1412
+    backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#1A211E',
+    borderTopColor: theme.colors.border,
     paddingTop: 8,
     minHeight: 64,
   },

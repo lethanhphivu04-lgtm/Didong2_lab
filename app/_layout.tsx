@@ -58,6 +58,24 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="workout/cardio"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="workout/tips"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="workout/water"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
           name="workout/summary"
           options={{
             animation: 'slide_from_bottom',

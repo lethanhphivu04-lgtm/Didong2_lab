@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   track: {
     width: '100%',
     height: 4,
-    backgroundColor: '#242D29',
+    backgroundColor: theme.colors.surfaceHighlight,
     borderRadius: 2,
     overflow: 'hidden',
   },

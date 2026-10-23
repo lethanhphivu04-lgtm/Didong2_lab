@@ -1,34 +1,42 @@
 export const colors = {
-  // Main backgrounds
-  background: '#0F1412',
-  surface: '#1A211E',
-  surfaceHighlight: '#242D29',
-  surfaceCard: '#1A211E',
+  // Main backgrounds (CaFit Dark Slate)
+  background: '#12161A',
+  surface: '#1A2026',
+  surfaceHighlight: '#222A32',
+  surfaceCard: '#1A2026',
   
   // Borders
-  border: '#3A4640',
-  borderLight: '#4A5851',
+  border: '#2A3440',
+  borderLight: '#3A4654',
   
   // Typography
-  textPrimary: '#F2F5F0',
-  textSecondary: '#A3AEA8',
-  textMuted: '#68756F',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#8C96A3',
+  textMuted: '#586472',
   
-  // Accent & Brand Colors
-  primary: '#C6F432', // Neon Lime (PDF accent)
-  primaryHover: '#D5F75E',
-  primaryDark: '#A8D422',
-  textOnPrimary: '#0F1412', // Black text on lime button
+  // Accent & Brand Colors (CaFit Coral & Warm Orange)
+  primary: '#FF724E', // CaFit Coral Accent
+  primaryHover: '#FF8A65',
+  primaryDark: '#E55A36',
+  primaryGradientStart: '#FF724E',
+  primaryGradientEnd: '#FFA07A',
+  textOnPrimary: '#FFFFFF', // Clean White text on Coral button
+  
+  // CaFit Specialized Accents
+  water: '#38B6FF', // CaFit Water Blue
+  waterDark: '#1E88E5',
+  heart: '#FF4D4D', // CaFit Cardio Red/BPM
+  lime: '#C6F432',  // Biomechanics & posture accent
   
   // Status Colors
-  success: '#7BE0A4', // Green
-  warning: '#FFB454', // Orange
-  danger: '#FF5C5C', // Red
-  info: '#38BDF8', // Cyan
+  success: '#4CAF50', // Green
+  warning: '#FFA726', // Orange
+  danger: '#FF5252', // Red
+  info: '#38B6FF', // Cyan / Water
   
   // Overlays
-  overlay: 'rgba(15, 20, 18, 0.75)',
-  modalBackdrop: 'rgba(0, 0, 0, 0.8)',
+  overlay: 'rgba(18, 22, 26, 0.75)',
+  modalBackdrop: 'rgba(0, 0, 0, 0.85)',
 } as const;
 
 export type Colors = typeof colors;

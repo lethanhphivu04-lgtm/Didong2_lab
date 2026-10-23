@@ -55,6 +55,10 @@ export interface INutritionService {
   recognizeFoodFromImage(imageUri: string): Promise<FoodNutrition>;
   addFoodEntry(mealType: string, food: FoodNutrition): Promise<FoodEntry>;
   removeFoodEntry(entryId: string): Promise<void>;
+  logWater(amountMl: number): Promise<DailyNutrition>;
+  setWaterTarget(targetMl: number): Promise<DailyNutrition>;
+  setWaterReminderSettings(enabled: boolean, intervalHours: number): Promise<DailyNutrition>;
+  resetWater(): Promise<DailyNutrition>;
 }
 
 export interface IProgressService {

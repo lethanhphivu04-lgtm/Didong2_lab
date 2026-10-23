@@ -127,6 +127,45 @@ export default function SettingsScreen() {
           <Text style={styles.settingValue}>{strings.settings.themeDark}</Text>
         </Card>
 
+        {/* TÍNH NĂNG CAFIT */}
+        <Text style={styles.sectionHeader}>TÍNH NĂNG CAFIT</Text>
+
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => router.push('/workout/water')}
+          accessibilityLabel="Nhắc nhở uống nước"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="water" size={18} color={theme.colors.water} />
+            <Text style={styles.settingLabel}>Nhắc nhở uống nước</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
+        </Card>
+
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => router.push('/workout/cardio')}
+          accessibilityLabel="Chạy bộ & Cardio HUD"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="walk" size={18} color={theme.colors.heart} />
+            <Text style={styles.settingLabel}>Chạy bộ & Cardio HUD</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
+        </Card>
+
+        <Card
+          style={styles.settingRowCard}
+          onPress={() => router.push('/workout/tips')}
+          accessibilityLabel="Lời khuyên thể hình & phục hồi"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="bulb" size={18} color={theme.colors.lime} />
+            <Text style={styles.settingLabel}>Lời khuyên thể hình & Phục hồi</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
+        </Card>
+
         {/* TÀI KHOẢN */}
         <Text style={styles.sectionHeader}>{strings.settings.accountSection}</Text>
 

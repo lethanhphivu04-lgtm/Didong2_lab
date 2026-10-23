@@ -169,12 +169,47 @@ export interface DailyNutrition {
   proteinConsumed: number;
   carbsConsumed: number;
   fatConsumed: number;
+  waterTargetMl?: number; // CaFit water target (default: 2000 ml)
+  waterConsumedMl?: number; // CaFit water consumed (default: 1250 ml)
+  waterReminderEnabled?: boolean;
+  waterReminderIntervalHours?: number;
   meals: {
     breakfast: FoodEntry[];
     lunch: FoodEntry[];
     dinner: FoodEntry[];
     snack: FoodEntry[];
   };
+}
+
+// ==========================================
+// CaFit Cardio & Running Types
+// ==========================================
+
+export interface CardioSession {
+  id: string;
+  durationSeconds: number;
+  distanceKm: number;
+  averagePaceMinKm: number;
+  averageHeartRateBpm: number;
+  caloriesBurned: number;
+  completedAt: string;
+  feedback?: 'challenging' | 'moderate' | 'exhausted';
+}
+
+// ==========================================
+// CaFit Fitness & Health Tips Types
+// ==========================================
+
+export interface FitnessTip {
+  id: string;
+  title: string;
+  category: 'training' | 'nutrition' | 'water' | 'recovery';
+  categoryDisplay: string;
+  readTimeMinutes: number;
+  summary: string;
+  content: string[];
+  keyTakeaways: string[];
+  bannerUrl?: string;
 }
 
 // ==========================================

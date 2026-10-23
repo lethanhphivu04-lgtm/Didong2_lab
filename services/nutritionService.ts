@@ -11,6 +11,10 @@ const DEFAULT_NUTRITION: DailyNutrition = {
   proteinConsumed: 78,
   carbsConsumed: 150,
   fatConsumed: 38,
+  waterTargetMl: 2000,
+  waterConsumedMl: 1250,
+  waterReminderEnabled: true,
+  waterReminderIntervalHours: 2,
   meals: {
     breakfast: [
       {
@@ -115,6 +119,36 @@ export class NutritionService implements INutritionService {
       }
     }
     await storage.set(NUTRITION_STORAGE_KEY, daily);
+  }
+
+  async logWater(amountMl: number): Promise<DailyNutrition> {
+    const daily = await this.getDailyNutrition();
+    const current = daily.waterConsumedMl ?? 1250;
+    daily.waterConsumedMl = Math.max(0, current + amountMl);
+    await storage.set(NUTRITION_STORAGE_KEY, daily);
+    return daily;
+  }
+
+  async setWaterTarget(targetMl: number): Promise<DailyNutrition> {
+    const daily = await this.getDailyNutrition();
+    daily.waterTargetMl = targetMl;
+    await storage.set(NUTRITION_STORAGE_KEY, daily);
+    return daily;
+  }
+
+  async setWaterReminderSettings(enabled: boolean, intervalHours: number): Promise<DailyNutrition> {
+    const daily = await this.getDailyNutrition();
+    daily.waterReminderEnabled = enabled;
+    daily.waterReminderIntervalHours = intervalHours;
+    await storage.set(NUTRITION_STORAGE_KEY, daily);
+    return daily;
+  }
+
+  async resetWater(): Promise<DailyNutrition> {
+    const daily = await this.getDailyNutrition();
+    daily.waterConsumedMl = 0;
+    await storage.set(NUTRITION_STORAGE_KEY, daily);
+    return daily;
   }
 }
 

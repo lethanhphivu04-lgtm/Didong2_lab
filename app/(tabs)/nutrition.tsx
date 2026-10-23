@@ -139,6 +139,70 @@ export default function NutritionTabScreen() {
           </View>
         </Card>
 
+        {/* CaFit Water Tracker Card */}
+        <Card style={styles.waterCard}>
+          <View style={styles.waterHeaderRow}>
+            <View style={styles.waterTitleGroup}>
+              <Ionicons name="water" size={20} color={theme.colors.water} />
+              <Text style={styles.waterCardTitle}>{strings.cafit.water.title}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/workout/water')}
+              style={styles.waterDetailLink}
+            >
+              <Text style={styles.waterDetailLinkText}>Chi tiết</Text>
+              <Ionicons name="chevron-forward" size={14} color={theme.colors.water} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.waterStatsRow}>
+            <Text style={styles.waterMainText}>
+              {(data?.waterConsumedMl || 1250).toLocaleString()} <Text style={styles.waterMlSub}>/ {(data?.waterTargetMl || 2000).toLocaleString()} ml</Text>
+            </Text>
+            <Text style={styles.waterPercentBadge}>
+              {Math.min(Math.round(((data?.waterConsumedMl || 1250) / (data?.waterTargetMl || 2000)) * 100), 100)}%
+            </Text>
+          </View>
+
+          {/* Water Progress Track */}
+          <View style={styles.waterProgressTrack}>
+            <View
+              style={[
+                styles.waterProgressFill,
+                {
+                  width: `${Math.min(
+                    ((data?.waterConsumedMl || 1250) / (data?.waterTargetMl || 2000)) * 100,
+                    100
+                  )}%`,
+                },
+              ]}
+            />
+          </View>
+
+          {/* Quick Add Buttons */}
+          <View style={styles.waterQuickRow}>
+            <TouchableOpacity
+              onPress={async () => {
+                const updated = await nutritionService.logWater(250);
+                setData({ ...updated });
+              }}
+              style={styles.waterQuickBtn}
+            >
+              <Text style={styles.waterQuickBtnText}>+250 ml (Cốc)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={async () => {
+                const updated = await nutritionService.logWater(500);
+                setData({ ...updated });
+              }}
+              style={[styles.waterQuickBtn, styles.waterQuickBtnHighlight]}
+            >
+              <Text style={[styles.waterQuickBtnText, { color: '#FFFFFF' }]}>+500 ml (Chai)</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
+
         {/* 4 Meals List */}
         {renderMealSection('breakfast', strings.nutrition.meals.breakfast)}
         {renderMealSection('lunch', strings.nutrition.meals.lunch)}
@@ -293,5 +357,97 @@ const styles = StyleSheet.create({
   scanButton: {
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xl,
+  },
+  waterCard: {
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.lg,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 182, 255, 0.3)',
+  },
+  waterHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  waterTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  waterCardTitle: {
+    fontSize: theme.typography.sizes.base,
+    fontFamily: theme.fontFamilies.bold,
+    fontWeight: '700',
+    color: theme.colors.textPrimary,
+  },
+  waterDetailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 2,
+  },
+  waterDetailLinkText: {
+    fontSize: 12,
+    fontFamily: theme.fontFamilies.bold,
+    color: theme.colors.water,
+  },
+  waterStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 8,
+  },
+  waterMainText: {
+    fontSize: 22,
+    fontFamily: theme.fontFamilies.bold,
+    fontWeight: '800',
+    color: theme.colors.textPrimary,
+  },
+  waterMlSub: {
+    fontSize: 13,
+    fontFamily: theme.fontFamilies.regular,
+    color: theme.colors.textSecondary,
+  },
+  waterPercentBadge: {
+    fontSize: 13,
+    fontFamily: theme.fontFamilies.bold,
+    color: theme.colors.water,
+  },
+  waterProgressTrack: {
+    height: 6,
+    backgroundColor: theme.colors.surfaceHighlight,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 14,
+  },
+  waterProgressFill: {
+    height: '100%',
+    backgroundColor: theme.colors.water,
+    borderRadius: 3,
+  },
+  waterQuickRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  waterQuickBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: theme.colors.surfaceHighlight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  waterQuickBtnHighlight: {
+    backgroundColor: theme.colors.water,
+    borderColor: theme.colors.water,
+  },
+  waterQuickBtnText: {
+    fontSize: 13,
+    fontFamily: theme.fontFamilies.semiBold,
+    color: theme.colors.textPrimary,
   },
 });
