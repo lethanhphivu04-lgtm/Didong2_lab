@@ -63,23 +63,34 @@ export const Card: React.FC<CardProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: theme.colors.surface, // #1A211E
-    borderRadius: theme.radii.card,        // 16px
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.card, // 20px
     borderWidth: 1,
-    borderColor: theme.colors.border,      // #3A4640
-    padding: theme.spacing.lg,             // 16px
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
+    shadowColor: '#221E3A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   hero: {
-    backgroundColor: theme.colors.primary, // #C6F432
+    backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
   },
   selected: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFF7F4',
     borderColor: theme.colors.primary,
     borderWidth: 2,
   },
   transparent: {
     backgroundColor: 'transparent',
     borderColor: theme.colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

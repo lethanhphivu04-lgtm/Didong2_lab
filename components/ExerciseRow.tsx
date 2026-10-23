@@ -67,20 +67,25 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface, // #1A211E
-    borderRadius: theme.radii.card,        // 16px
-    padding: theme.spacing.md,             // 12px
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.card, // 20px
+    padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,      // #3A4640
+    borderColor: theme.colors.border,
     minHeight: 72,
+    shadowColor: '#221E3A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   thumbnailContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#242D29',
+    backgroundColor: 'rgba(255, 114, 78, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.md,
@@ -95,7 +100,7 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#242D29',
+    backgroundColor: 'rgba(255, 114, 78, 0.12)',
   },
   infoContainer: {
     flex: 1,

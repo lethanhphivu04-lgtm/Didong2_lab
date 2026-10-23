@@ -149,6 +149,11 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.border,
     paddingTop: 8,
     minHeight: 64,
+    shadowColor: '#221E3A',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 6,
   },
   tabButton: {
     flex: 1,

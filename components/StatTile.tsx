@@ -57,12 +57,17 @@ export const StatTile: React.FC<StatTileProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface, // #1A211E
-    borderRadius: theme.radii.card,        // 16px
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.card, // 20px
     borderWidth: 1,
-    borderColor: theme.colors.border,      // #3A4640
-    padding: theme.spacing.lg,             // 16px
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
     justifyContent: 'center',
+    shadowColor: '#221E3A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   headerRow: {
     flexDirection: 'row',
@@ -73,7 +78,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: theme.typography.sizes.sm,
     fontFamily: theme.fontFamilies.regular,
-    color: theme.colors.textSecondary,     // #A3AEA8
+    color: theme.colors.textSecondary,
   },
   statusBadge: {
     fontSize: theme.typography.sizes.sm,
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: theme.fontFamilies.bold,
     fontWeight: '700',
-    color: theme.colors.textPrimary,       // #F2F5F0
+    color: theme.colors.textPrimary,
   },
   unit: {
     fontSize: theme.typography.sizes.sm,
@@ -98,7 +103,7 @@ const styles = StyleSheet.create({
   },
   progressBarTrack: {
     height: 4,
-    backgroundColor: '#242D29',
+    backgroundColor: theme.colors.surfaceHighlight,
     borderRadius: 2,
     marginVertical: 8,
     overflow: 'hidden',
