@@ -1,0 +1,46 @@
+﻿pasteboard
+CFA_Select your fitness level
+CFA_Personnal Details
+CFA Menu
+CFA_Traning Plan
+CFA_ Traning Plan Details
+CFA_ home      – 1
+CFA_  Water Settings
+CFA_ Traning Plan Water – 1
+CFA_ Exercuses detail 
+CFA_Traning Stats Calor
+CFA_  Meal Plan
+CFA_  Meal Plan – 3
+CFA_ Weight
+CFA_Login
+CFA_Profile 
+CFA_Profile Fitness Level
+CFA_Running-Time – 4
+CFA - Video Full Screen
+CFA_1 Running-Heart – 1
+CFA_2 Running-Calories – 1
+CFA_3 Running-avege spped – 1
+CFA_ Login2
+CFA_Tips
+CFA_.4 Running-Distance – 1
+CFA_Register
+CFA_ Settings-Language – 1
+CFA_ Settings-Connect – 1
+CFA_ Support
+CFA_ Running-History edit
+CFA_Running-History
+CFA_Running-Settings
+CFA_Running-Complete – 1
+CFA_Tips Details
+CFA- traning
+CFA- traning 
+CFA_.5 Running-Lock screen – 1
+CFA_ Settings
+CFA_Exercuses – 1
+CFA_Exercuses – 4
+CFA_exercise details
+Onboarding 2
+Onboarding 3
+CFA- Schedule
+CFA_WELCOM 
+Onboarding 1
