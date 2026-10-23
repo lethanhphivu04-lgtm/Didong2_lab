@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
-import { Button, TextField } from '../../components';
+import { Button, TextField, Header } from '../../components';
 import { authService, profileService } from '../../services';
 
 export default function RegisterScreen() {
@@ -85,6 +85,8 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <Header showBack onBack={() => router.back()} />
+
         <Text style={styles.title}>{strings.auth.createAccount}</Text>
         <Text style={styles.subtitle}>{strings.auth.registerSubtitle}</Text>
 

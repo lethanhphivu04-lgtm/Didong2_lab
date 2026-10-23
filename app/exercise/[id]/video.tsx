@@ -147,7 +147,17 @@ export default function ExerciseVideoScreen() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Header />
+        <Header
+          title={exercise?.name || 'Chi tiết bài tập'}
+          onBack={() => {
+            player.pause();
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)/workout');
+            }
+          }}
+        />
 
         {/* Video Player Box with Custom Overlay Controls */}
         <View style={styles.videoPlayerContainer}>

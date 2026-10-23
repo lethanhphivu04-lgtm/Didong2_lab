@@ -96,7 +96,12 @@ export default function Step1ProfileScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StepProgress currentStep={1} totalSteps={4} />
+        <StepProgress
+          currentStep={1}
+          totalSteps={4}
+          showBack
+          onBack={() => router.replace('/(auth)/login')}
+        />
 
         <Text style={styles.title}>{strings.onboarding.step1.title}</Text>
         <Text style={styles.subtitle}>{strings.onboarding.step1.subtitle}</Text>

@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
-import { Card, Button, StatTile } from '../../components';
+import { Card, Button, StatTile, Header } from '../../components';
 import { workoutService } from '../../services';
 
 export default function WorkoutSummaryScreen() {
@@ -54,7 +54,11 @@ export default function WorkoutSummaryScreen() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.headerTitle}>{strings.workout.workoutCompleted}</Text>
+        <Header
+          title={strings.workout.workoutCompleted}
+          showBack
+          onBack={() => router.replace('/(tabs)/workout')}
+        />
 
         {/* 4 Big Metrics Grid */}
         <View style={styles.metricsGrid}>

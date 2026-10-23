@@ -127,7 +127,11 @@ export default function CameraWorkoutScreen() {
             style={styles.backButton}
             onPress={() => {
               player.pause();
-              router.back();
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)/workout');
+              }
             }}
             accessibilityRole="button"
             accessibilityLabel="Quay lại video hướng dẫn"

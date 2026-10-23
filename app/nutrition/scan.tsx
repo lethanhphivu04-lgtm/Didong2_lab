@@ -128,7 +128,13 @@ export default function FoodScanScreen() {
           <View style={styles.topHeaderBar}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.back()}
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(tabs)/nutrition');
+                }
+              }}
               accessibilityRole="button"
               accessibilityLabel="Quay lại nhật ký ăn uống"
             >
