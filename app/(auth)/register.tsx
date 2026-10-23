@@ -169,7 +169,7 @@ export default function RegisterScreen() {
 
         <TouchableOpacity
           style={styles.switchAuthButton}
-          onPress={() => router.push('/(auth)/login')}
+          onPress={() => router.replace('/(auth)/login')}
           accessibilityRole="button"
           accessibilityLabel={strings.auth.alreadyHaveAccount}
         >

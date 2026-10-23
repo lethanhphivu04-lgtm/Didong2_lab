@@ -12,11 +12,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useCameraPermissions, CameraView } from 'expo-camera';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { useEvent } from 'expo';
 import { theme } from '../../../theme';
 import { strings } from '../../../constants/strings';
 import { Button } from '../../../components';
 import { workoutService, poseAnalyzer } from '../../../services';
 import { Exercise, PoseFeedback } from '../../../types';
+import { SAMPLE_VIDEO_3D } from '../../../mocks/mockData';
 
 export default function CameraWorkoutScreen() {
   const router = useRouter();
@@ -91,15 +93,25 @@ export default function CameraWorkoutScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const sampleVideoUrl =
-    exercise?.video3DUrl ||
-    'https://raw.githubusercontent.com/samarthify/AI-Fitness-Trainer/main/squats.mp4';
+  const sampleVideoUrl = exercise?.video3DUrl || SAMPLE_VIDEO_3D;
 
   const player = useVideoPlayer(sampleVideoUrl, (p) => {
     p.loop = true;
     p.playbackRate = 0.75; // Tốc độ mẫu chuẩn PDF: 0.75x
     p.play();
   });
+
+  useEffect(() => {
+    if (exercise?.video3DUrl) {
+      player.replace(exercise.video3DUrl);
+      player.playbackRate = 0.75;
+      player.loop = true;
+      player.play();
+    }
+  }, [exercise]);
+
+  const statusEvent = useEvent(player, 'statusChange', { status: player.status });
+  const hasError = (statusEvent?.status ?? player.status) === 'error';
 
   const handleFinish = () => {
     player.pause();
@@ -112,14 +124,22 @@ export default function CameraWorkoutScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* NỬA TRÊN: Video mẫu (expo-video) */}
+      {/* NỬA TRÊN: Video mẫu (expo-video) hoặc ảnh động 3D */}
       <View style={styles.topHalf}>
-        <VideoView
-          player={player}
-          nativeControls={false}
-          contentFit="cover"
-          style={styles.sampleVideoSurface}
-        />
+        {!hasError ? (
+          <VideoView
+            player={player}
+            nativeControls={false}
+            contentFit="cover"
+            style={styles.sampleVideoSurface}
+          />
+        ) : (
+          <Image
+            source={{ uri: animation3DSource }}
+            style={styles.sampleVideoSurface}
+            resizeMode="contain"
+          />
+        )}
 
         {/* Top header overlay */}
         <View style={styles.headerOverlay}>

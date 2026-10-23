@@ -74,8 +74,13 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await authService.login('google.user@gmail.com', 'google12345');
+      const profile = await profileService.getProfile();
       setLoading(false);
-      router.replace('/(onboarding)/step1-profile');
+      if (profile && profile.onboardingCompleted) {
+        router.replace('/(tabs)/workout');
+      } else {
+        router.replace('/(onboarding)/step1-profile');
+      }
     } catch (e) {
       setLoading(false);
     }
@@ -151,7 +156,7 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={styles.switchAuthButton}
-            onPress={() => router.push('/(auth)/register')}
+            onPress={() => router.replace('/(auth)/register')}
             accessibilityRole="button"
             accessibilityLabel={strings.auth.noAccount}
           >

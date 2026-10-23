@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { strings } from '../../constants/strings';
 import { Header, Card } from '../../components';
-import { storage } from '../../services';
+import { storage, authService } from '../../services';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -18,7 +18,45 @@ export default function SettingsScreen() {
     Alert.alert('Đổi mật khẩu', 'Đã gửi liên kết đặt lại mật khẩu về email của bạn.');
   };
 
+  const handleLogout = () => {
+    const doLogout = async () => {
+      await authService.logout();
+      router.replace('/(auth)/login');
+    };
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?')) {
+        doLogout();
+      }
+      return;
+    }
+
+    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Đăng xuất',
+        style: 'destructive',
+        onPress: doLogout,
+      },
+    ]);
+  };
+
   const handleDeleteAccount = () => {
+    const doDelete = async () => {
+      await storage.clear();
+      router.replace('/(auth)/login');
+    };
+
+    if (Platform.OS === 'web') {
+      if (
+        typeof window !== 'undefined' &&
+        window.confirm('Cảnh báo: Hành động này sẽ xóa vĩnh viễn toàn bộ dữ liệu. Bạn có chắc chắn không?')
+      ) {
+        doDelete();
+      }
+      return;
+    }
+
     Alert.alert(
       'Cảnh báo xóa tài khoản',
       'Hành động này sẽ xóa vĩnh viễn toàn bộ dữ liệu buổi tập, dinh dưỡng và tiến độ của bạn. Bạn có chắc chắn không?',
@@ -27,10 +65,7 @@ export default function SettingsScreen() {
         {
           text: 'Xóa vĩnh viễn',
           style: 'destructive',
-          onPress: async () => {
-            await storage.clear();
-            router.replace('/(auth)/login');
-          },
+          onPress: doDelete,
         },
       ]
     );
@@ -176,6 +211,17 @@ export default function SettingsScreen() {
         >
           <Text style={styles.settingLabel}>{strings.settings.changePassword}</Text>
           <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
+        </Card>
+
+        <Card
+          style={styles.settingRowCard}
+          onPress={handleLogout}
+          accessibilityLabel={strings.profile.logout}
+        >
+          <Text style={[styles.settingLabel, { color: theme.colors.warning }]}>
+            {strings.profile.logout}
+          </Text>
+          <Ionicons name="log-out-outline" size={18} color={theme.colors.warning} />
         </Card>
 
         <Card

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import { strings } from '../../../constants/strings';
 import { Header, Card, Button, Chip } from '../../../components';
 import { workoutService } from '../../../services';
 import { Exercise } from '../../../types';
+import { SAMPLE_VIDEO_2D, SAMPLE_VIDEO_3D } from '../../../mocks/mockData';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -26,6 +28,7 @@ export default function ExerciseVideoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [mode3D, setMode3D] = useState(true);
+  const [showGif, setShowGif] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
   const [loop, setLoop] = useState(true);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -46,13 +49,26 @@ export default function ExerciseVideoScreen() {
     ? mode3D
       ? exercise.video3DUrl
       : exercise.video2DUrl
-    : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+    : SAMPLE_VIDEO_3D;
 
   const player = useVideoPlayer(initialVideoUrl, (p) => {
     p.loop = true;
     p.playbackRate = 1.0;
     p.play();
   });
+
+  // Keep player in sync when exercise loads or mode3D toggles
+  useEffect(() => {
+    if (exercise && !showGif) {
+      const nextSource = mode3D ? exercise.video3DUrl : exercise.video2DUrl;
+      if (nextSource) {
+        player.replace(nextSource);
+        player.playbackRate = speed;
+        player.loop = loop;
+        player.play();
+      }
+    }
+  }, [exercise, mode3D, showGif]);
 
   // Track playing status with useEvent from expo
   const playingEvent = useEvent(player, 'playingChange', { isPlaying: player.playing });
@@ -93,11 +109,13 @@ export default function ExerciseVideoScreen() {
 
   // Switch 2D/3D while preserving exact currentTime
   const handleToggleDimension = (newMode3D: boolean) => {
-    if (mode3D === newMode3D || !exercise) return;
+    setShowGif(false);
+    if (mode3D === newMode3D && !showGif) return;
     const currentPos = player.currentTime;
     const wasPlaying = isPlaying;
 
     setMode3D(newMode3D);
+    if (!exercise) return;
     const newSource = newMode3D ? exercise.video3DUrl : exercise.video2DUrl;
 
     player.replace(newSource);
@@ -161,21 +179,33 @@ export default function ExerciseVideoScreen() {
 
         {/* Video Player Box with Custom Overlay Controls */}
         <View style={styles.videoPlayerContainer}>
-          <VideoView
-            ref={videoViewRef}
-            player={player}
-            nativeControls={false}
-            allowsPictureInPicture
-            fullscreenOptions={{ enable: true }}
-            contentFit="cover"
-            style={styles.videoSurface}
-          />
+          {!showGif ? (
+            <VideoView
+              ref={videoViewRef}
+              player={player}
+              nativeControls={false}
+              allowsPictureInPicture
+              fullscreenOptions={{ enable: true }}
+              contentFit="cover"
+              style={styles.videoSurface}
+            />
+          ) : (
+            <Image
+              source={{
+                uri:
+                  exercise?.animation3DUrl ||
+                  'https://raw.githubusercontent.com/omercotkd/exercises-gifs/main/assets/0514.gif',
+              }}
+              style={styles.videoSurface}
+              resizeMode="contain"
+            />
+          )}
 
           {/* Top badges bar over video */}
           <View style={styles.videoTopBar}>
             <View style={styles.videoBadge}>
               <Text style={styles.videoBadgeText}>
-                {exercise?.name || 'Squat'} · {mode3D ? '3D' : '2D'}
+                {exercise?.name || 'Squat'} · {showGif ? '3D GIF' : mode3D ? '3D Video' : '2D Video'}
               </Text>
             </View>
 
@@ -190,28 +220,47 @@ export default function ExerciseVideoScreen() {
           </View>
 
           {/* Buffering Indicator */}
-          {isBuffering && (
+          {!showGif && isBuffering && (
             <View style={styles.bufferingOverlay}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
           )}
 
           {/* Error Overlay */}
-          {hasError && (
+          {!showGif && hasError && (
             <View style={styles.errorOverlay}>
               <Text style={styles.errorText}>Không thể phát video</Text>
-              <Button
-                title={strings.common.retry}
-                size="small"
-                variant="outline"
-                accessibilityLabel={strings.common.retry}
-                onPress={() => player.replay()}
-              />
+              <View style={styles.errorButtonsRow}>
+                <Button
+                  title={strings.common.retry}
+                  size="small"
+                  variant="outline"
+                  accessibilityLabel={strings.common.retry}
+                  onPress={() => {
+                    const target = exercise
+                      ? mode3D
+                        ? exercise.video3DUrl
+                        : exercise.video2DUrl
+                      : SAMPLE_VIDEO_3D;
+                    player.replace(target);
+                    player.play();
+                  }}
+                />
+                <Button
+                  title="Xem ảnh 3D"
+                  size="small"
+                  accessibilityLabel="Xem ảnh 3D"
+                  onPress={() => {
+                    setShowGif(true);
+                    player.pause();
+                  }}
+                />
+              </View>
             </View>
           )}
 
           {/* Center Play/Pause button */}
-          {!hasError && (
+          {!showGif && !hasError && (
             <TouchableOpacity
               style={styles.centerPlayButton}
               onPress={() => (isPlaying ? player.pause() : player.play())}
@@ -227,71 +276,87 @@ export default function ExerciseVideoScreen() {
           )}
 
           {/* Timeline and seek controls */}
-          <View style={styles.timelineContainer}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={(e) => {
-                const clickX = e.nativeEvent.locationX;
-                const containerWidth = SCREEN_WIDTH - 32 - 24; // padding offset
-                const targetPercent = Math.max(0, Math.min(clickX / containerWidth, 1));
-                player.currentTime = targetPercent * durationSec;
-              }}
-              style={styles.progressTouchArea}
-            >
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-              </View>
-            </TouchableOpacity>
+          {!showGif && (
+            <View style={styles.timelineContainer}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={(e) => {
+                  const clickX = e.nativeEvent.locationX;
+                  const containerWidth = SCREEN_WIDTH - 32 - 24; // padding offset
+                  const targetPercent = Math.max(0, Math.min(clickX / containerWidth, 1));
+                  player.currentTime = targetPercent * durationSec;
+                }}
+                style={styles.progressTouchArea}
+              >
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+                </View>
+              </TouchableOpacity>
 
-            <View style={styles.timeLabelsRow}>
-              <Text style={styles.timeText}>{formatTime(currentTimeSec)}</Text>
-              <View style={styles.seekRow}>
-                <TouchableOpacity
-                  onPress={() => handleSeek(-5)}
-                  style={styles.seekButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Lùi 5 giây"
-                >
-                  <Ionicons name="play-back" size={14} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleSeek(5)}
-                  style={styles.seekButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Tua nhanh 5 giây"
-                >
-                  <Ionicons name="play-forward" size={14} color="#fff" />
-                </TouchableOpacity>
+              <View style={styles.timeLabelsRow}>
+                <Text style={styles.timeText}>{formatTime(currentTimeSec)}</Text>
+                <View style={styles.seekRow}>
+                  <TouchableOpacity
+                    onPress={() => handleSeek(-5)}
+                    style={styles.seekButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Lùi 5 giây"
+                  >
+                    <Ionicons name="play-back" size={14} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleSeek(5)}
+                    style={styles.seekButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Tua nhanh 5 giây"
+                  >
+                    <Ionicons name="play-forward" size={14} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.timeText}>{formatTime(durationSec)}</Text>
               </View>
-              <Text style={styles.timeText}>{formatTime(durationSec)}</Text>
             </View>
-          </View>
+          )}
         </View>
 
         {/* Exercise Title */}
         <Text style={styles.exerciseTitle}>{exercise?.name || 'Squat'}</Text>
 
-        {/* 2D / 3D Segmented Toggle */}
+        {/* 2D / 3D / GIF Segmented Toggle */}
         <View style={styles.segmentContainer}>
           <TouchableOpacity
-            style={[styles.segmentButton, !mode3D && styles.segmentButtonActive]}
+            style={[styles.segmentButton, !showGif && !mode3D && styles.segmentButtonActive]}
             onPress={() => handleToggleDimension(false)}
             accessibilityRole="button"
             accessibilityLabel="Chuyển sang video 2D"
           >
-            <Text style={[styles.segmentText, !mode3D && styles.segmentTextActive]}>
-              2D
+            <Text style={[styles.segmentText, !showGif && !mode3D && styles.segmentTextActive]}>
+              2D Video
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentButton, mode3D && styles.segmentButtonActive]}
+            style={[styles.segmentButton, !showGif && mode3D && styles.segmentButtonActive]}
             onPress={() => handleToggleDimension(true)}
             accessibilityRole="button"
             accessibilityLabel="Chuyển sang mô hình 3D"
           >
-            <Text style={[styles.segmentText, mode3D && styles.segmentTextActive]}>
-              3D
+            <Text style={[styles.segmentText, !showGif && mode3D && styles.segmentTextActive]}>
+              3D Video
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentButton, showGif && styles.segmentButtonActive]}
+            onPress={() => {
+              setShowGif(true);
+              player.pause();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Chuyển sang ảnh động 3D"
+          >
+            <Text style={[styles.segmentText, showGif && styles.segmentTextActive]}>
+              Ảnh 3D (GIF)
             </Text>
           </TouchableOpacity>
         </View>
@@ -422,6 +487,11 @@ const styles = StyleSheet.create({
     color: theme.colors.danger,
     fontSize: theme.typography.sizes.sm,
     fontFamily: theme.fontFamilies.semiBold,
+  },
+  errorButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
   },
   centerPlayButton: {
     alignSelf: 'center',
