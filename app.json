@@ -1,18 +1,19 @@
 {
   "expo": {
-    "scheme": "thanhvu-app",
-    "name": "thanhvu-app",
-    "slug": "thanhvu-app",
+    "scheme": "thanhvu-fitness",
+    "name": "FitnessAI",
+    "slug": "fitness-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0F1412",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0F1412",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,15 +21,31 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-       "bundler": "metro"
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
-    ],
-
-     "experiments": {
-      "typedRoutes": true
-    }
+      "expo-status-bar",
+      "expo-font",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép ứng dụng sử dụng camera để tập cùng AI và quét món ăn."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép ứng dụng truy cập thư viện ảnh để phân tích món ăn."
+        }
+      ]
+    ]
   }
 }
